@@ -30,6 +30,7 @@ import (
 	"github.com/cilium/cilium/pkg/k8s"
 	ciliumv2 "github.com/cilium/cilium/pkg/k8s/apis/cilium.io/v2"
 	k8sTypes "github.com/cilium/cilium/pkg/k8s/slim/k8s/api/core/v1"
+	"github.com/cilium/cilium/pkg/lock"
 	"github.com/cilium/cilium/pkg/logging"
 	"github.com/cilium/cilium/pkg/logging/logfields"
 	"github.com/cilium/cilium/pkg/mtu"
@@ -57,11 +58,24 @@ type k8sNodeGetter interface {
 	GetK8sNode(ctx context.Context, nodeName string) (*corev1.Node, error)
 }
 
+// The KVStoreNodeUpdater interface is used to provide an abstraction for the
+// NodeStore object logic used to update a node entry in the KV store.
+type KVStoreNodeUpdater interface {
+	UpdateKVNodeEntry(node *nodeTypes.Node) error
+}
+
+// The LocalNode interface is used to scope down direct access to the LocalNode
+// object of a NodeStore.
+type LocalNode interface {
+	GetIPAddresses() []nodeTypes.Address
+}
+
 // NodeDiscovery represents a node discovery action
 type NodeDiscovery struct {
 	Manager               *nodemanager.Manager
 	LocalConfig           datapath.LocalNodeConfiguration
 	Registrar             nodestore.NodeRegistrar
+	localNodeLock         lock.RWMutex
 	LocalNode             nodeTypes.Node
 	Registered            chan struct{}
 	LocalStateInitialized chan struct{}
@@ -167,6 +181,9 @@ func (n *NodeDiscovery) JoinCluster(nodeName string) {
 // agent startup to configure the local node based on the configuration options
 // passed to the agent. nodeName is the name to be used in the local agent.
 func (n *NodeDiscovery) StartDiscovery(nodeName string) {
+	n.localNodeLock.Lock()
+	defer n.localNodeLock.Unlock()
+
 	n.LocalNode.Name = nodeName
 	n.LocalNode.Cluster = option.Config.ClusterName
 	n.LocalNode.IPAddresses = []nodeTypes.Address{}
@@ -361,6 +378,7 @@ func (n *NodeDiscovery) mutateNodeResource(nodeResource *ciliumv2.CiliumNode) er
 		context.TODO(),
 		nodeTypes.GetName(),
 	)
+
 	switch {
 	case err != nil && k8serrors.IsNotFound(err) && len(nodeResource.ObjectMeta.OwnerReferences) == 0:
 		log.WithError(err).WithField(
@@ -619,4 +637,30 @@ func (n *NodeDiscovery) RegisterK8sNodeGetter(k8sNodeGetter k8sNodeGetter) {
 
 func getInt(i int) *int {
 	return &i
+}
+
+func (nodeDiscovery *NodeDiscovery) UpdateKVNodeEntry(node *nodeTypes.Node) error {
+	select {
+	case <-nodeDiscovery.Registered:
+		break
+	default:
+		return fmt.Errorf("node is not yet registered in the local cluster")
+	}
+
+	if nodeDiscovery.Registrar.SharedStore == nil {
+		return fmt.Errorf("node registrar is not yet initialized")
+	}
+
+	if err := nodeDiscovery.Registrar.UpdateLocalKeySync(node); err != nil {
+		return fmt.Errorf("failed to update KV node store entry: %w", err)
+	}
+
+	return nil
+}
+
+func (nodeDiscovery *NodeDiscovery) GetIPAddresses() []nodeTypes.Address {
+	nodeDiscovery.localNodeLock.RLock()
+	defer nodeDiscovery.localNodeLock.RUnlock()
+
+	return append([]nodeTypes.Address{}, nodeDiscovery.LocalNode.IPAddresses...)
 }

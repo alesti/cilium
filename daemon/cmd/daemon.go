@@ -528,6 +528,8 @@ func NewDaemon(ctx context.Context, cancel context.CancelFunc, epMgr *endpointma
 		d.k8sWatcher.NodeChain.Register(&d.k8sWatcher.K8sSvcCache)
 	}
 
+	d.k8sWatcher.NodeChain.Register(watchers.NewCiliumNodeUpdater(d.k8sWatcher, d.nodeDiscovery, d.nodeDiscovery))
+
 	d.redirectPolicyManager.RegisterSvcCache(&d.k8sWatcher.K8sSvcCache)
 	d.redirectPolicyManager.RegisterGetStores(d.k8sWatcher)
 	if option.Config.BGPAnnounceLBIP {
