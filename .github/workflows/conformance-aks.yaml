@@ -173,6 +173,7 @@ jobs:
           mkdir -p $HOME/go/src/github.com/cilium
           git clone --depth 1 -b pr/pchaigno/increase-svc-timeout https://github.com/cilium/cilium-cli $HOME/go/src/github.com/cilium/cilium-cli
           cd $HOME/go/src/github.com/cilium/cilium-cli
+          export GOPATH=$HOME/go
           echo $GOPATH
           echo $GOROOT
           echo $PATH
