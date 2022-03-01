@@ -268,7 +268,7 @@ jobs:
 
       - name: Run connectivity test
         run: |
-          cilium connectivity test --force-deploy --flow-validation=disabled
+          cilium connectivity test --force-deploy --flow-validation=disabled --verbose
 
       - name: Post-test information gathering
         if: ${{ !success() }}
