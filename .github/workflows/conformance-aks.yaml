@@ -264,6 +264,7 @@ jobs:
           cilium hubble port-forward&
           sleep 10s
           [[ $(pgrep -f "cilium.*hubble.*port-forward|kubectl.*port-forward.*hubble-relay" | wc -l) == 2 ]]
+          kubectl -n kube-system exec ds/cilium -- hubble status
 
       - name: Run connectivity test
         run: |
