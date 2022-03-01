@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/client-go/tools/cache"
 
+	"github.com/cilium/cilium/pkg/comparator"
 	"github.com/cilium/cilium/pkg/k8s"
 	cilium_v2 "github.com/cilium/cilium/pkg/k8s/apis/cilium.io/v2"
 	"github.com/cilium/cilium/pkg/k8s/informer"
@@ -50,7 +51,8 @@ func (k *K8sWatcher) ciliumNodeInit(ciliumNPClient *k8s.K8sCiliumClient, asyncCo
 					if oldCN := k8s.ObjToCiliumNode(oldObj); oldCN != nil {
 						if ciliumNode := k8s.ObjToCiliumNode(newObj); ciliumNode != nil {
 							valid = true
-							if oldCN.DeepEqual(ciliumNode) {
+							if oldCN.DeepEqual(ciliumNode) &&
+								comparator.MapStringEquals(oldCN.ObjectMeta.Labels, ciliumNode.ObjectMeta.Labels) {
 								equal = true
 								return
 							}
