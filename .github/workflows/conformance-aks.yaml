@@ -164,10 +164,9 @@ jobs:
 
       - name: Install Cilium CLI
         run: |
-          curl -sSL --remote-name-all https://github.com/cilium/cilium-cli/releases/download/${{ env.cilium_cli_version }}/cilium-linux-amd64.tar.gz{,.sha256sum}
-          sha256sum --check cilium-linux-amd64.tar.gz.sha256sum
-          sudo tar xzvfC cilium-linux-amd64.tar.gz /usr/local/bin
-          rm cilium-linux-amd64.tar.gz{,.sha256sum}
+          git clone --depth 1 -b pr/pchaigno/increase-svc-timeout https://github.com/cilium/cilium-cli
+          cd cilium-cli
+          sudo make install
           cilium version
 
       - name: Login to Azure
