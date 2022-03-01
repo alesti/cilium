@@ -162,6 +162,11 @@ jobs:
           state: pending
           target_url: ${{ env.check_url }}
 
+      - name: Install Go
+        uses: actions/setup-go@f6164bd8c8acb4a71fb2791a8b6c4024ff038dab
+        with:
+          go-version: 1.17.7
+
       - name: Install Cilium CLI
         run: |
           git clone --depth 1 -b pr/pchaigno/increase-svc-timeout https://github.com/cilium/cilium-cli
