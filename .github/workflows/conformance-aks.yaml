@@ -169,9 +169,9 @@ jobs:
 
       - name: Install Cilium CLI
         run: |
-          mkdir -p $GOPATH/src/github.com/cilium
-          git clone --depth 1 -b pr/pchaigno/increase-svc-timeout https://github.com/cilium/cilium-cli $GOPATH/src/github.com/cilium/cilium-cli
-          cd $GOPATH/src/github.com/cilium/cilium-cli
+          mkdir -p $HOME/go/src/github.com/cilium
+          git clone --depth 1 -b pr/pchaigno/increase-svc-timeout https://github.com/cilium/cilium-cli $HOME/go/src/github.com/cilium/cilium-cli
+          cd $HOME/go/src/github.com/cilium/cilium-cli
           sudo make install
           cilium version
 
