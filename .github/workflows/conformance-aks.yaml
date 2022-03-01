@@ -177,7 +177,11 @@ jobs:
           echo $GOPATH
           echo $GOROOT
           echo $PATH
+          go mod tidy
+          go mod vendor
+          go mod verify
           make
+          ./cilium version
           sudo make install
           cilium version
 
