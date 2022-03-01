@@ -182,7 +182,7 @@ jobs:
           go mod verify
           make
           ./cilium version
-          sudo make install
+          sudo -E make install
           cilium version
 
       - name: Login to Azure
