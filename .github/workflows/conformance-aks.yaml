@@ -170,9 +170,11 @@ jobs:
       - name: Install Cilium CLI
         run: |
           go version
-          go get github.com/onsi/ginkgo/ginkgo
+          mkdir -p $HOME/go/src/github.com/cilium
+          git clone --depth 1 -b pr/pchaigno/increase-svc-timeout https://github.com/cilium/cilium-cli $HOME/go/src/github.com/cilium/cilium-cli
           cd $HOME/go/src/github.com/cilium/cilium-cli
-          git checkout pr/pchaigno/increase-svc-timeout
+          export GOPATH=$HOME/go
+          make
           sudo make install
           cilium version
 
